@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro de Slides</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+    h1 { text-align: center; }
+    form { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #ddd; max-width: 500px; margin: 0 auto; }
+    input, textarea, button { display: block; width: 100%; margin: 10px 0; padding: 10px; }
+    #mensagem { text-align: center; font-weight: bold; margin-bottom: 10px; }
+    #lista { margin-top: 30px; }
+    .slide-card { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 0 5px #ccc; margin-bottom: 10px; }
+    .ver-mais { color: blue; cursor: pointer; text-decoration: underline; }
+    .paginacao { text-align: center; margin-top: 20px; }
+    .paginacao button { margin: 0 5px; padding: 8px 12px; }
+  </style>
+</head>
+<body>
+
+  <h1>Cadastro de Slides</h1>
+
+  <div id="mensagem"></div>
+
+  <form id="formSlide">
+    <input type="text" id="data" placeholder="Data (dd/mm/aaaa)" required />
+    <input type="text" id="assunto" placeholder="Assunto" required />
+    <textarea id="texto" placeholder="Texto do slide" rows="6" required></textarea>
+    <input type="text" id="autor" placeholder="Autor" required />
+    <button type="submit">Cadastrar</button>
+  </form>
+
+  <div id="lista"></div>
+  <div class="paginacao">
+    <button id="prev">Anterior</button>
+    <span id="pageInfo"></span>
+    <button id="next">Próximo</button>
+  </div>
+
+  <script>
+    const API_URL = "https://slides-frontend-omega.vercel.app/";
+    let currentPage = 1;
+    const limit = 10;
+    let totalPages = 1;
+
+    async function carregarSlides(page = 1) {
+      const res = await fetch(`${API_URL}?page=${page}&limit=${limit}`);
+      const data = await res.json();
+
+      if (!data.success) {
+        document.getElementById("lista").innerHTML = "<p>Erro ao carregar slides.</p>";
+        return;
+      }
+
+      totalPages = data.totalPages;
+      document.getElementById("pageInfo").innerText = `Página ${page} de ${totalPages}`;
+
+      const container = document.getElementById("lista");
+      container.innerHTML = "";
+
+      data.slides.forEach(s => {
+        const texto = s.slide.texto.split("\n");
+        const precisaVerMais = texto.length > 5;
+        const preview = texto.slice(0, 5).join("\n");
+
+        const card = document.createElement("div");
+        card.className = "slide-card";
+        card.innerHTML = `
+          <p><b>Data:</b> ${s.slide.data}</p>
+          <p><b>Assunto:</b> ${s.slide.assunto}</p>
+          <pre class="texto">${precisaVerMais ? preview : s.slide.texto}</pre>
+          ${precisaVerMais ? `<span class="ver-mais">Ver mais</span>` : ""}
+          <p><b>Autor:</b> ${s.slide.autor}</p>
+        `;
+
+        if (precisaVerMais) {
+          const link = card.querySelector(".ver-mais");
+          link.addEventListener("click", () => {
+            const pre = card.querySelector(".texto");
+            if (link.textContent === "Ver mais") {
+              pre.textContent = s.slide.texto;
+              link.textContent = "Ver menos";
+            } else {
+              pre.textContent = preview;
+              link.textContent = "Ver mais";
+            }
+          });
+        }
+
+        container.appendChild(card);
+      });
+    }
+
+    document.getElementById("formSlide").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const novoSlide = {
+        data: document.getElementById("data").value,
+        assunto: document.getElementById("assunto").value,
+        texto: document.getElementById("texto").value,
+        autor: document.getElementById("autor").value
+      };
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(novoSlide)
+      });
+
+      const result = await res.json();
+      const msg = document.getElementById("mensagem");
+      msg.style.color = result.success ? "green" : "red";
+      msg.textContent = result.message;
+
+      if (result.success) {
+        document.getElementById("formSlide").reset();
+        carregarSlides(currentPage);
+      }
+
+      setTimeout(() => msg.textContent = "", 3000);
+    });
+
+    document.getElementById("prev").addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        carregarSlides(currentPage);
+      }
+    });
+
+    document.getElementById("next").addEventListener("click", () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        carregarSlides(currentPage);
+      }
+    });
+
+    carregarSlides(currentPage);
+  </script>
+</body>
+</html>
