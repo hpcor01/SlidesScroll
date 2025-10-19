@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,12 +11,36 @@ interface SlideCardProps {
 
 export function SlideCard({ slide }: SlideCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  
-  const lines = slide.texto.split('\n');
-  const hasLongText = lines.length > 5;
-  const displayText = isExpanded || !hasLongText 
-    ? slide.texto 
-    : lines.slice(0, 5).join('\n');
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const textRef = useRef<HTMLPreElement>(null);
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (!textRef.current) return;
+      
+      const element = textRef.current;
+      const lineHeight = parseFloat(getComputedStyle(element).lineHeight);
+      const maxLines = 5;
+      const maxHeight = lineHeight * maxLines;
+      
+      const tempElement = element.cloneNode(true) as HTMLPreElement;
+      tempElement.style.maxHeight = 'none';
+      tempElement.style.webkitLineClamp = 'unset';
+      tempElement.style.position = 'absolute';
+      tempElement.style.visibility = 'hidden';
+      tempElement.style.width = element.offsetWidth + 'px';
+      
+      element.parentElement?.appendChild(tempElement);
+      const actualHeight = tempElement.scrollHeight;
+      element.parentElement?.removeChild(tempElement);
+      
+      setHasOverflow(actualHeight > maxHeight + 5);
+    };
+
+    checkOverflow();
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [slide.texto]);
 
   return (
     <Card className="hover-elevate" data-testid={`card-slide-${slide.id}`}>
@@ -30,12 +54,15 @@ export function SlideCard({ slide }: SlideCardProps) {
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <pre 
-            className="whitespace-pre-wrap font-sans text-sm text-foreground leading-relaxed"
+            ref={textRef}
+            className={`whitespace-pre-wrap font-sans text-sm text-foreground leading-relaxed ${
+              !isExpanded && hasOverflow ? 'line-clamp-5' : ''
+            }`}
             data-testid={`text-texto-${slide.id}`}
           >
-            {displayText}
+            {slide.texto}
           </pre>
-          {hasLongText && (
+          {hasOverflow && (
             <Button
               variant="ghost"
               size="sm"
