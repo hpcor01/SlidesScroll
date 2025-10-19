@@ -1,125 +1,188 @@
-# Slides Management Application
+# Gestão de Slides
 
-## Overview
+Sistema de gerenciamento de slides com paginação, detecção inteligente de duplicatas e visualização otimizada de conteúdo.
 
-A slides management system built with React, Express, and PostgreSQL that enables users to create, view, and manage presentation slides with intelligent duplicate detection. The application features a clean, productivity-focused interface inspired by tools like Linear and Notion, with paginated slide viewing and real-time duplicate checking during content creation.
+## Visão Geral
 
-## User Preferences
+Aplicação web moderna para cadastro e visualização de slides com três recursos principais:
 
-Preferred communication style: Simple, everyday language.
+1. **Paginação Funcional** - Navegação eficiente através de grandes volumes de slides
+2. **Truncamento Inteligente de Texto** - Exibição otimizada com expansão/recolhimento para textos longos
+3. **Detecção de Duplicatas** - Comparação inteligente usando similaridade fuzzy (Levenshtein)
 
-## System Architecture
+## Arquitetura do Projeto
 
-### Frontend Architecture
+### Stack Tecnológico
 
-**Technology Stack:**
-- React 18 with TypeScript
-- Vite as build tool and development server
-- Wouter for client-side routing
-- TanStack Query (React Query) for server state management
-- Shadcn UI component library built on Radix UI primitives
-- Tailwind CSS for styling with custom design system
+**Frontend:**
+- React 18 com TypeScript
+- Wouter para roteamento
+- TanStack Query para gerenciamento de estado e cache
+- Shadcn UI + Tailwind CSS para componentes
+- React Hook Form + Zod para validação de formulários
 
-**Key Design Decisions:**
-- **Component-Based Architecture**: Uses shadcn/ui's "new-york" style variant for consistent, professional UI components
-- **Form Management**: React Hook Form with Zod schema validation for type-safe form handling
-- **State Management**: TanStack Query handles server state with disabled refetch on window focus and infinite stale time for optimal performance
-- **Styling Approach**: Utility-first CSS with Tailwind, custom CSS variables for theming, and productivity-focused design system emphasizing information density and clarity
-- **Real-time Duplicate Detection**: Debounced API calls check for content similarity as users type (minimum 20 characters required)
+**Backend:**
+- Express.js
+- Armazenamento em memória (MemStorage)
+- Biblioteca string-similarity para detecção de duplicatas
 
-### Backend Architecture
+### Estrutura de Dados
 
-**Technology Stack:**
-- Express.js server with TypeScript
-- Drizzle ORM for database interactions
-- Neon serverless PostgreSQL database
-- In-memory storage fallback for development
+```typescript
+interface Slide {
+  id: string;
+  assunto: string;  // Título/assunto do slide
+  texto: string;    // Conteúdo principal
+  autor: string;    // Nome do autor
+  data: Date;       // Data de criação
+}
+```
 
-**Key Design Decisions:**
-- **Dual Storage Strategy**: Implements `IStorage` interface with both in-memory (`MemStorage`) and database implementations for flexibility
-- **RESTful API Design**: Clean API endpoints under `/api` prefix with JSON request/response format
-- **Request Logging**: Custom middleware logs all API requests with timing information (truncated to 80 characters)
-- **Error Handling**: Centralized error handler middleware with status code normalization
-- **Development Mode**: Vite middleware integration for HMR during development, static file serving in production
+## Recursos Implementados
 
-**API Endpoints:**
-- `GET /api/slides` - Paginated slide retrieval (supports `page` and `perPage` query params)
-- `GET /api/slides/check-duplicate` - Duplicate detection (requires `texto` and optional `assunto` params)
-- `POST /api/slides` - Slide creation
+### 1. Paginação
 
-### Database Schema
+- **Backend**: GET `/api/slides?page=1&perPage=10`
+- **Frontend**: Controles de navegação com números de página, botões anterior/próximo
+- **UX**: Exibe contagem de itens ("Mostrando 1 a 10 de 47 slides")
+- **Performance**: 10 slides por página (configurável)
 
-**Tables:**
-- `slides` table with columns:
-  - `id`: Primary key (UUID, auto-generated)
-  - `assunto`: Text field for slide subject/topic (required)
-  - `texto`: Text field for slide content (required)
-  - `autor`: Text field for author name (required)
-  - `data`: Timestamp with automatic defaulting to current time
+### 2. Truncamento de Texto ("ver mais" / "ver menos")
 
-**Schema Management:**
-- Drizzle Kit for migrations (output to `./migrations`)
-- Drizzle-Zod integration for automatic Zod schema generation from database schema
-- Type-safe database operations with TypeScript inference
+- **Detecção**: Calcula altura renderizada para determinar se o texto excede 5 linhas
+- **Método**: CSS `line-clamp-5` combinado com detecção JavaScript de overflow
+- **Funcionalidade**: Funciona tanto para parágrafos longos quanto texto com quebras de linha
+- **Responsivo**: Recalcula overflow em redimensionamento de janela
 
-### Duplicate Detection Algorithm
+### 3. Detecção de Duplicatas
 
-**Implementation:**
-- Uses `string-similarity` library for text comparison
-- Configurable similarity threshold (default: 0.5 or 50%)
-- Returns matches sorted by similarity score (highest first)
-- Considers both slide content (`texto`) and subject (`assunto`) for matching
-- Client-side debouncing prevents excessive API calls during typing
+- **Algoritmo**: Comparação de strings usando distância de Levenshtein
+- **Ponderação**: 70% similaridade do texto + 30% similaridade do assunto
+- **Limite**: 50% de similaridade para considerar duplicata
+- **UX**: 
+  - Verificação em tempo real com debounce de 800ms
+  - Painel de aviso visual mostrando matches e porcentagens
+  - Usuário pode cancelar ou prosseguir mesmo com duplicata detectada
 
-### Build and Deployment
+## Endpoints da API
 
-**Development:**
-- Hot Module Replacement via Vite middleware
-- Concurrent client/server TypeScript type checking
-- Custom error modal overlay for runtime errors (Replit integration)
+### GET /api/slides
+Lista slides com paginação.
 
-**Production:**
-- Vite builds client to `dist/public`
-- esbuild bundles server to `dist/index.js` (ESM format)
-- Static file serving from built client directory
-- Environment-based configuration (NODE_ENV)
+**Query Parameters:**
+- `page` (número, padrão: 1)
+- `perPage` (número, padrão: 10, máx: 100)
 
-**Build Commands:**
-- `npm run dev` - Development server with HMR
-- `npm run build` - Production build (client + server)
-- `npm run start` - Production server
-- `npm run db:push` - Push database schema changes
+**Resposta:**
+```json
+{
+  "data": [...slides],
+  "total": 47,
+  "page": 1,
+  "perPage": 10,
+  "totalPages": 5
+}
+```
 
-## External Dependencies
+### GET /api/slides/check-duplicate
+Verifica duplicatas antes de criar slide.
 
-### UI Component Libraries
-- **Radix UI**: Unstyled, accessible component primitives (accordions, dialogs, dropdowns, popovers, tooltips, etc.)
-- **Shadcn UI**: Pre-styled components built on Radix with Tailwind CSS
-- **Lucide React**: Icon library for consistent iconography
+**Query Parameters:**
+- `texto` (string, obrigatório)
+- `assunto` (string, opcional)
 
-### Database & ORM
-- **Neon Serverless PostgreSQL**: Cloud-native PostgreSQL database (`@neondatabase/serverless`)
-- **Drizzle ORM**: Type-safe SQL query builder with PostgreSQL dialect
-- **Drizzle Kit**: Schema management and migration tool
-- **Drizzle-Zod**: Automatic Zod schema generation from Drizzle schemas
+**Resposta:**
+```json
+{
+  "isDuplicate": true,
+  "matches": [
+    {
+      "slide": {...},
+      "similarity": 0.85
+    }
+  ]
+}
+```
 
-### Utility Libraries
-- **string-similarity**: Text similarity calculation for duplicate detection
-- **date-fns**: Date formatting and manipulation
-- **clsx + tailwind-merge**: Conditional CSS class composition
-- **class-variance-authority**: Type-safe component variant management
-- **nanoid**: Unique ID generation
+### POST /api/slides
+Cria novo slide.
 
-### Development Tools
-- **Vite**: Build tool with fast HMR and optimized production builds
-- **TypeScript**: Type safety across frontend and backend
-- **ESBuild**: Fast JavaScript bundler for server code
-- **Replit Plugins**: Runtime error modal, cartographer, and dev banner for Replit environment
+**Body:**
+```json
+{
+  "assunto": "Título do slide",
+  "texto": "Conteúdo detalhado...",
+  "autor": "Nome do autor"
+}
+```
 
-### Form & Validation
-- **React Hook Form**: Performant form state management
-- **Zod**: TypeScript-first schema validation
-- **@hookform/resolvers**: Zod integration for React Hook Form
+## Componentes Principais
 
-### Session & Security
-- **connect-pg-simple**: PostgreSQL session store (included but session implementation not visible in provided code)
+### SlideCard
+- Exibe informações do slide em card estilizado
+- Truncamento inteligente de texto
+- Botão "ver mais"/"ver menos" quando aplicável
+- Metadados: autor e data formatada em português
+
+### PaginationControls
+- Navegação com números de página
+- Botões anterior/próximo com estados desabilitados
+- Indicador de range de itens
+- Reticências (...) para páginas omitidas
+
+### DuplicateWarning
+- Alert destacado quando duplicatas são encontradas
+- Lista até 3 matches mais similares
+- Badges coloridos por nível de similaridade:
+  - ≥80%: vermelho (alta similaridade)
+  - 60-79%: amarelo (média similaridade)
+  - <60%: verde (baixa similaridade)
+- Botões "Cancelar" e "Continuar mesmo assim"
+
+### SlideForm
+- Formulário com validação Zod
+- Verificação de duplicatas em tempo real
+- Estados de loading e submissão
+- Feedback via toast notifications
+
+## Interface de Usuário
+
+- **Idioma**: Português (pt-BR)
+- **Layout**: Responsivo com sidebar sticky no desktop
+- **Design**: Seguindo design guidelines modernas com:
+  - Cores consistentes (modo claro/escuro)
+  - Espaçamento harmônico
+  - Interações suaves (hover-elevate)
+  - Componentes Shadcn UI
+- **Acessibilidade**: 
+  - Atributos data-testid em elementos interativos
+  - Labels semânticos
+  - Estados de foco visíveis
+
+## Alterações Recentes
+
+**2025-10-19**
+- Implementação completa do sistema de slides
+- Paginação funcional com backend e frontend integrados
+- Sistema de truncamento baseado em altura renderizada (não apenas quebras de linha)
+- Detecção de duplicatas com fuzzy matching e UI de avisos
+- Interface em português com formatação de datas pt-BR
+- Testes end-to-end passando em todos os cenários
+
+## Próximos Passos Sugeridos
+
+1. **Persistência**: Migrar de MemStorage para PostgreSQL para retenção de dados
+2. **Edição**: Adicionar funcionalidade de editar/excluir slides existentes
+3. **Busca**: Implementar busca/filtro por assunto ou autor
+4. **Categorias**: Sistema de tags ou categorias para organização
+5. **Exportação**: Permitir exportar slides em diferentes formatos
+6. **Performance**: Monitorar recálculo de overflow em resize para grandes listas
+
+## Como Executar
+
+O projeto está configurado para rodar automaticamente:
+```bash
+npm run dev
+```
+
+Acesse em: http://localhost:5000
