@@ -1,0 +1,31 @@
+/* Estilos mínimos para ExpandableText — ajuste conforme seu design */
+
+.expandable-text-wrapper {
+  position: relative;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #222;
+}
+
+/* collapsed: limit to N lines via -webkit-line-clamp for modern browsers */
+.expandable-text.collapsed {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; /* valor padrão; o JS aplica fallback max-height também */
+  overflow: hidden;
+}
+
+/* quando expandido, mostramos normalmente */
+.expandable-text.expanded {
+  display: block;
+}
+
+.expandable-toggle {
+  margin-top: 6px;
+  background: none;
+  border: none;
+  color: #007bff;
+  padding: 0;
+  cursor: pointer;
+  font-size: 13px;
+}
