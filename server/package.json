@@ -1,0 +1,15 @@
+{
+  "name": "rest-express",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "NODE_ENV=production node dist/index.js"
+  },
+  "dependencies": {
+    ...
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
