@@ -4,7 +4,7 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
-  root: path.resolve(__dirname), // a pasta client é o root
+  root: ".", // raiz REAL do front-end
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
@@ -13,7 +13,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: path.resolve(__dirname, "dist"),
+    outDir: "dist", // saída padrão do Vite
     emptyOutDir: true,
   },
   server: {
