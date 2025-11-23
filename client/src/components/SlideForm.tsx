@@ -14,7 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { insertSlideSchema, type InsertSlide, type DuplicateMatch } from "@shared/schema";
+import { insertSlideSchema, type InsertSlide, type DuplicateMatch } from "@/shared/schema";
 import { DuplicateWarning } from "./DuplicateWarning";
 import { Loader2, Plus } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
