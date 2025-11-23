@@ -1,2 +1,0 @@
-# slides-backend
-Backend Slides
