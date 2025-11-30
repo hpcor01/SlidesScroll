@@ -6,7 +6,7 @@ import { Article, Role, User } from '../types';
 
 const USERS_COLLECTION = 'dbSlides.colUser';
 const SLIDES_COLLECTION = 'dbSlides.colSlide';
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://slides-backend-hu6m.onrender.com/api';
 
 
 export const getUsers = async (): Promise<User[]> => {
