@@ -3,7 +3,7 @@ import { Article, DuplicateCheckResult } from "../types";
 
 // Initialize Gemini Client
 // Note: In a real production app, ensure API_KEY is strictly handled.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
 export const checkDuplicateWithGemini = async (
   newSubject: string,
