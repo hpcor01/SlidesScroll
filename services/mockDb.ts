@@ -1,4 +1,4 @@
-import { Article, Role, User } from '../types';
+import { Article, Role, User } from '../src/types';
 
 const API_URL = 'https://slides-backend-hu6m.onrender.com/api';
 

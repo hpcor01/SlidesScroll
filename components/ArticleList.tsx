@@ -1,5 +1,5 @@
 import React from 'react';
-import { Article, Role, User } from '../types';
+import { Article, Role, User } from '../src/types';
 
 interface ArticleListProps {
   articles: Article[];

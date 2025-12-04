@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { Article, DuplicateCheckResult } from "../types";
+import { Article, DuplicateCheckResult } from "../src/types";
 
 // Initialize Gemini Client
 // Note: In a real production app, ensure API_KEY is strictly handled.
