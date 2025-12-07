@@ -1,0 +1,5 @@
+{
+  "name": "LegalSlide Manager",
+  "description": "A system to manage legal articles and slides with AI-powered duplicate detection, role-based access control, and dark mode.",
+  "requestFramePermissions": []
+}
